@@ -1,5 +1,6 @@
 import requests
 import secretinfo
+
 cloudflare_headers = {
     'X-Auth-Email': secretinfo.cloudflare_email ,
     'Authorization': secretinfo.cloudflare_api_key,
