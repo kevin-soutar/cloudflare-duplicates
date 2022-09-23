@@ -1,20 +1,27 @@
 import requests
 import secretinfo
 
-cloudflare_headers = {
+def cloudflare_records(page_num,per_page=100,direction='asc'):
+    cloudflare_headers = {
     'X-Auth-Email': secretinfo.cloudflare_email ,
     'Authorization': secretinfo.cloudflare_api_key,
     'Content-Type': 'application/json',
-}
+    }
 
-response = requests.get(f"https://api.cloudflare.com/client/v4/zones/{secretinfo.cloudflare_zone_id}/dns_records", headers=cloudflare_headers)
-output = response.json()
+    response = requests.get(f"https://api.cloudflare.com/client/v4/zones/{secretinfo.cloudflare_zone_id}/dns_records?page={page_num}&per_page={per_page}&order=type&direction={direction}", headers=cloudflare_headers)
+    return response.json()
 
+page_num =1
+original_output =["No Result"]
 a_records = {}
 
-for id, record in enumerate(output["result"]):
-    if record["type"] == "A":
-        a_records.setdefault(record["content"], set()).add(record["name"])
+while original_output != []:
+    output = cloudflare_records(page_num)
+    page_num = page_num + 1
+    original_output = output['result']
+    for id, record in enumerate(output["result"]):
+        if record["type"] == "A":
+            a_records.setdefault(record["content"], set()).add(record["name"])
 
 results = filter(lambda x: len(x) >1, a_records.values())
 
@@ -38,5 +45,4 @@ new_email = {
     'HtmlBody': email_text,
     'MessageStream': 'outbound',
 }
-
 requests.post('https://api.postmarkapp.com/email', headers=postmark_headers, json=new_email)
